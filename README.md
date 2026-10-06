@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # 🎮 PromeHub Data Exchange
 
 Aplicación Java de consola que convierte el catálogo de videojuegos de PromeHub entre **CSV** (PHManager) y **XML** (PHStore), sin conectar las dos aplicaciones directamente.
@@ -90,4 +89,4 @@ Con mensajes en español, la aplicación gestiona: fichero inexistente, errores 
 | _Sergio_ | Programador experto |
 | _Hector_ | QA |
 | _JP_ | Documentación |
-=======
+

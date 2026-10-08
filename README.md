@@ -1,6 +1,6 @@
 # 🎮 PromeHub Data Exchange
 
-Aplicación Java de consola que convierte el catálogo de videojuegos de PromeHub entre **CSV** (PHManager) y **XML** (PHStore), sin conectar las dos aplicaciones directamente.
+PromeHub tiene dos aplicaciones que no se entienden entre sí: **PHManager** recibe los videojuegos en **CSV** y **PHStore** solo trabaja con **XML**. Como no queremos conectarlas directamente, hemos hecho una pequeña aplicación Java de consola que hace de intermediaria y traduce en los dos sentidos:
 
 ```
 CSV → Java → XML
@@ -9,53 +9,51 @@ XML → Java → CSV
 
 Práctica de Acceso a Datos (DAM) · U1 · Persistencia en ficheros · RA1 · Curso 2026-27
 
-## Requisitos
+## Cómo ejecutarla
 
-- JDK 17 o superior
-- Maven (descarga solo `jakarta.xml.bind-api` y `jaxb-runtime`, definidos en el `pom.xml`)
-
-## Ejecución
+Necesitas JDK 17 o superior y Maven. Maven se encarga de descargar JAXB (`jakarta.xml.bind-api` y `jaxb-runtime`), que ya están en el `pom.xml`.
 
 ```bash
 mvn clean package
 java -jar target/promehub-data-exchange.jar
 ```
 
-Hay que ejecutarlo desde la raíz del proyecto, porque las rutas por defecto (`datos/...`) son relativas.
-Los `.class` se generan solo en `target/` (carpeta ignorada por Git); no se guardan compilados en el repositorio.
+Lánzala siempre desde la carpeta raíz del proyecto, porque las rutas por defecto (`datos/...`) son relativas.
 
-## Estructura del proyecto
+Una cosa más: en el repositorio no guardamos ningún `.class`. Todo lo compilado se genera en `target/`, que Git ignora.
+
+## Qué hay en el proyecto
 
 ```
 RA1/
 ├── pom.xml
 ├── README.md
 ├── datos/
-│   ├── videojuegos.csv            ← CSV de entrada (PHManager)
-│   ├── videojuegos_erroneo.csv    ← CSV con registros incorrectos (para las pruebas)
-│   └── catalogo.xml               ← XML de intercambio (PHStore)
+│   ├── videojuegos.csv            ← CSV de entrada (el que manda PHManager)
+│   ├── videojuegos_erroneo.csv    ← CSV con registros mal puestos, para probar errores
+│   └── catalogo.xml               ← XML de intercambio (el que lee PHStore)
 └── src/main/java/promehub/
-    ├── App.java                   ← menú por consola y control del flujo
-    ├── Videojuego.java            ← modelo de datos (con anotaciones JAXB)
-    ├── Catalogo.java              ← elemento raíz <catalogo> (JAXB)
-    ├── GestorCSV.java             ← lectura secuencial y escritura del CSV
-    └── GestorXML.java             ← conversión objetos ↔ XML con JAXB
+    ├── App.java                   ← el menú y el control del flujo
+    ├── Videojuego.java            ← el modelo de datos, con sus anotaciones JAXB
+    ├── Catalogo.java              ← la raíz <catalogo> del XML
+    ├── GestorCSV.java             ← lee (en secuencial) y escribe el CSV
+    └── GestorXML.java             ← pasa de objetos a XML y al revés con JAXB
 ```
 
-| Clase | Responsabilidad |
-|---|---|
-| `App` | Muestra el menú, lee las opciones y llama a los gestores. Busca y muestra información de ficheros. |
-| `Videojuego` | Representa un videojuego. Define cómo se mapea a XML. |
-| `Catalogo` | Contenedor de la lista de videojuegos; es la raíz del XML. |
-| `GestorCSV` | Lee el CSV de forma secuencial (`BufferedReader`), valida cada registro y exporta a CSV. |
-| `GestorXML` | `Marshaller` (objetos → XML) y `Unmarshaller` (XML → objetos). |
+Cada clase tiene una única responsabilidad:
 
-## Flujo de datos
+- **App**: enseña el menú, lee lo que escribe el usuario y llama a los gestores. También se encarga de buscar y de mostrar la información de los ficheros.
+- **Videojuego**: representa un videojuego y define cómo se convierte a XML.
+- **Catalogo**: guarda la lista de videojuegos y es el elemento raíz del XML.
+- **GestorCSV**: lee el CSV línea a línea con `BufferedReader`, valida cada registro y también exporta a CSV.
+- **GestorXML**: usa el `Marshaller` para pasar de objetos a XML y el `Unmarshaller` para volver.
 
-- **CSV → Java → XML:** `GestorCSV.cargar` lee línea a línea, crea un `Videojuego` por registro válido y los guarda en una lista → `GestorXML.exportar` mete la lista en un `Catalogo` y JAXB genera el XML.
-- **XML → Java → CSV:** `GestorXML.cargar` usa el `Unmarshaller` para reconstruir el `Catalogo` y su lista → `GestorCSV.exportar` escribe el CSV.
+## Cómo viajan los datos
 
-## Menú
+- **CSV → Java → XML.** `GestorCSV` lee el fichero de arriba abajo, crea un `Videojuego` por cada registro válido y los guarda en una lista. Después `GestorXML` mete esa lista en un `Catalogo` y JAXB escribe el XML.
+- **XML → Java → CSV.** `GestorXML` lee el XML, y el `Unmarshaller` reconstruye el `Catalogo` con su lista de videojuegos. Por último, `GestorCSV` escribe esa lista en un CSV.
+
+## El menú
 
 ```
 1. Cargar catálogo desde CSV
@@ -68,14 +66,13 @@ RA1/
 0. Salir
 ```
 
-## Modelo de datos
+## Los datos
 
-Cada `Videojuego` tiene: `id`, `titulo`, `plataforma`, `genero`, `precio`, `stock` y `codigoProveedor`.
+Cada videojuego tiene `id`, `titulo`, `plataforma`, `genero`, `precio`, `stock` y `codigoProveedor`.
 
-> `codigoProveedor` es interno de PHManager y **no aparece en el XML** (`@XmlTransient`).
-> Por eso, al generar un CSV a partir de un XML, esa columna sale vacía.
+Ojo con `codigoProveedor`: es información interna de PHManager y **no debe salir en el XML**, así que lo marcamos con `@XmlTransient`. La consecuencia es que, si generas un CSV a partir de un XML, esa columna sale vacía (el XML no la trae).
 
-## Formato del XML
+El XML queda así:
 
 ```xml
 <catalogo>
@@ -89,48 +86,48 @@ Cada `Videojuego` tiene: `id`, `titulo`, `plataforma`, `genero`, `precio`, `stoc
 </catalogo>
 ```
 
-## Anotaciones JAXB
+## Las anotaciones JAXB que usamos
 
-| Anotación | Dónde | Uso |
+| Anotación | Dónde | Para qué |
 |---|---|---|
-| `@XmlRootElement(name = "catalogo")` | `Catalogo` | Elemento raíz `<catalogo>` |
-| `@XmlAccessorType(XmlAccessType.FIELD)` | `Catalogo`, `Videojuego` | JAXB mapea los campos de la clase directamente |
-| `@XmlAttribute` | `Videojuego.id` | `id` como atributo XML |
-| `@XmlElement` | `Videojuego` (resto de campos) y `Catalogo.videojuegos` | Campos como elementos XML; la lista como `<videojuego>` repetido |
-| `@XmlTransient` | `Videojuego.codigoProveedor` | Excluye el campo del XML |
-| `@XmlType(propOrder = …)` | `Videojuego` | Fija el orden de los elementos hijos |
+| `@XmlRootElement(name = "catalogo")` | `Catalogo` | Que `<catalogo>` sea el elemento raíz |
+| `@XmlAccessorType(XmlAccessType.FIELD)` | `Catalogo` y `Videojuego` | Que JAXB lea directamente los campos de la clase |
+| `@XmlAttribute` | `Videojuego.id` | Que el `id` salga como atributo (`<videojuego id="1">`) |
+| `@XmlElement` | Resto de campos de `Videojuego` y la lista de `Catalogo` | Que salgan como elementos; la lista, como varios `<videojuego>` |
+| `@XmlTransient` | `Videojuego.codigoProveedor` | Dejar ese campo fuera del XML |
+| `@XmlType(propOrder = …)` | `Videojuego` | Fijar el orden de los elementos hijos |
 
-## Excepciones controladas
+## Qué pasa cuando algo falla
 
-Todos los mensajes están en español e indican qué ha fallado:
+La aplicación no se cae: avisa en español de qué ha ido mal y vuelve al menú.
 
-| Situación | Dónde se gestiona |
+| Problema | Cómo lo gestionamos |
 |---|---|
-| Fichero inexistente | `FileNotFoundException` en `GestorCSV` / `GestorXML` |
-| Error de lectura / escritura | `IOException` en `App` |
-| Registro CSV incorrecto (nº de campos, comillas, id repetido…) | `IllegalArgumentException` por línea: se descarta y se informa |
-| Error de conversión numérica | `NumberFormatException` → mensaje del campo afectado |
-| Error de procesamiento XML | `JAXBException` → `IOException` con mensaje claro |
-| Opción de menú incorrecta | `NumberFormatException` y `default` del `switch` |
+| El fichero no existe | `FileNotFoundException` en `GestorCSV` y `GestorXML` |
+| Error al leer o escribir | `IOException`, capturada en `App` |
+| Registro CSV incorrecto (campos de menos, comillas mal cerradas, id repetido…) | Se descarta esa línea, se dice cuál y por qué, y se sigue con las demás |
+| Un número que no es número | `NumberFormatException`, con el nombre del campo afectado |
+| XML roto o con datos inválidos | `JAXBException`, convertida en un `IOException` con un mensaje claro |
+| Opción de menú incorrecta | `NumberFormatException` y el `default` del `switch` |
 
 ## Pruebas
 
-Ejecutar desde la raíz del proyecto. Marcar el resultado obtenido tras cada ejecución.
+Se ejecutan desde la raíz del proyecto. ✅ significa que la hemos probado y sale bien; ⏳ significa que falta ejecutarla porque necesita JAXB (que se descarga con Maven). Cuando se pruebe, hay que cambiar el ⏳ por el resultado real.
 
-| Nº | Prueba | Cómo se ejecuta | Resultado esperado | Resultado obtenido |
+| Nº | Qué probamos | Cómo | Qué esperamos | Qué ha pasado |
 |---|---|---|---|---|
-| 1 | Cargar CSV correctamente | Opción 1, Enter (ruta por defecto) | "5 registros leídos, 5 válidos, 0 descartados" | ☐ |
-| 2 | Mostrar el catálogo | Opción 2 | Se listan los 5 videojuegos | ☐ |
-| 3 | Generar el XML | Opción 3 | Se crea `datos/catalogo.xml` con 5 `<videojuego>` | ☐ |
-| 4 | `codigoProveedor` no aparece en el XML | Abrir `datos/catalogo.xml` | Ninguna etiqueta `<codigoProveedor>` | ☐ |
-| 5 | Cargar nuevamente el XML | Opción 4, Enter | "XML cargado correctamente: 5 videojuegos" | ☐ |
-| 6 | Generar un CSV a partir del XML | Opción 5, Enter | Se crea `datos/catalogo_exportado.csv` con 5 filas (`codigoProveedor` vacío) | ☐ |
-| 7 | Cargar un fichero que no existe | Opción 1 y ruta `no_existe.csv` | "ERROR: El fichero CSV 'no_existe.csv' no existe." | ☐ |
-| 8 | Registro CSV incorrecto | Opción 1 y ruta `datos/videojuegos_erroneo.csv` | 2 válidos, 3 descartados, con el motivo de cada línea | ☐ |
-| 9 | Buscar por id y por título | Opción 6 con `3` y con `gta` | Se muestran Minecraft y GTA V | ☐ |
-| 10 | Información de ficheros | Opción 7 | Ruta, existencia y tamaño de los 3 ficheros | ☐ |
-| 11 | Opción de menú incorrecta | Escribir `9` y `abc` | Mensaje de opción no válida; el menú se repite | ☐ |
-| 12 | XML mal formado | Editar `catalogo.xml` (p. ej. `id="abc"`) y opción 4 | "ERROR al procesar el XML: …" sin cerrar la app | ☐ |
+| 1 | Cargar el CSV | Opción 1 y Enter (ruta por defecto) | "5 registros leídos, 5 válidos, 0 descartados" | ✅ Correcto: «CSV procesado: 5 registros leídos, 5 válidos, 0 descartados.» |
+| 2 | Mostrar el catálogo | Opción 2 | Se listan los 5 videojuegos | ✅ Correcto: «--- CATÁLOGO (5 videojuegos) ---» con los 5 juegos |
+| 3 | Generar el XML | Opción 3 | Se crea `datos/catalogo.xml` con 5 `<videojuego>` | ⏳ Pendiente: necesita JAXB (`mvn clean package`) |
+| 4 | Que `codigoProveedor` no esté en el XML | Abrir `datos/catalogo.xml` | Ninguna etiqueta `<codigoProveedor>` | ⏳ Pendiente: se mira en el XML generado en la prueba 3 |
+| 5 | Volver a cargar el XML | Opción 4 y Enter | "XML cargado correctamente: 5 videojuegos" | ⏳ Pendiente: necesita JAXB |
+| 6 | Generar un CSV desde el XML | Opción 5 y Enter | Se crea `datos/catalogo_exportado.csv` con 5 filas (`codigoProveedor` vacío) | ⏳ Pendiente: depende de la prueba 5 |
+| 7 | Cargar un fichero que no existe | Opción 1 y ruta `no_existe.csv` | "ERROR: El fichero CSV 'no_existe.csv' no existe." | ✅ Correcto: sale ese mensaje y se vuelve al menú |
+| 8 | Registros CSV incorrectos | Opción 1 y ruta `datos/videojuegos_erroneo.csv` | 2 válidos y 3 descartados, con el motivo de cada línea | ✅ Correcto: «5 registros leídos, 2 válidos, 3 descartados»; línea 3, precio 'abc' no válido; línea 4, 5 campos en vez de 7; línea 5, stock 'seis' no válido |
+| 9 | Buscar por id y por título | Opción 6 con `3` y con `gta` | Salen Minecraft y GTA V | ✅ Correcto: con `3` sale Minecraft y con `gta` sale GTA V |
+| 10 | Información de ficheros | Opción 7 | Ruta, si existe y tamaño de los 3 ficheros | ✅ Correcto: ruta absoluta, «Existe: sí/no» y tamaño (283 bytes el CSV de entrada) |
+| 11 | Opción de menú incorrecta | Escribir `9` y `abc` | Aviso de opción no válida y el menú vuelve a salir | ✅ Correcto: «Opción no válida: elige un número entre 0 y 7.» y «debes escribir un número entre 0 y 7.» |
+| 12 | XML mal formado | Cambiar algo en `catalogo.xml` (por ejemplo `id="abc"`) y opción 4 | "ERROR al procesar el XML: …" sin que se cierre la app | ⏳ Pendiente: necesita JAXB |
 
 ## Equipo
 

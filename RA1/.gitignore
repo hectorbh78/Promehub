@@ -1,0 +1,4 @@
+# Archivos compilados (se regeneran con Maven en target/)
+target/
+*.class
+out/

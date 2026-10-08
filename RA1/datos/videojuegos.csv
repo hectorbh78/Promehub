@@ -1,0 +1,6 @@
+id,titulo,plataforma,genero,precio,stock,codigoProveedor
+1,Cyberpunk 2077,PC,RPG,39.99,12,PROV-001
+2,EA Sports FC 26,PS5,Deportes,69.99,8,PROV-003
+3,Minecraft,PC,Sandbox,29.99,20,PROV-002
+4,Mario Kart World,Switch 2,Carreras,79.99,6,PROV-004
+5,GTA V,PS5,Accion,29.99,15,PROV-001

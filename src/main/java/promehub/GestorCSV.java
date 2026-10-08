@@ -51,10 +51,7 @@ public class GestorCSV {
             if (cabecera == null) {
                 throw new IOException("El fichero CSV está vacío.");
             }
-            // Elimina el carácter especial BOM si el archivo lo contiene al inicio
-            if (!cabecera.isEmpty() && cabecera.charAt(0) == '\uFEFF') {
-                cabecera = cabecera.substring(1);
-            }
+           
 
             // Detecta si se usa coma o punto y coma como separador
             String separador = detectarSeparador(cabecera);

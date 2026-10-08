@@ -112,22 +112,20 @@ La aplicación no se cae: avisa en español de qué ha ido mal y vuelve al menú
 
 ## Pruebas
 
-Se ejecutan desde la raíz del proyecto. ✅ significa que la hemos probado y sale bien; ⏳ significa que falta ejecutarla porque necesita JAXB (que se descarga con Maven). Cuando se pruebe, hay que cambiar el ⏳ por el resultado real.
-
 | Nº | Qué probamos | Cómo | Qué esperamos | Qué ha pasado |
 |---|---|---|---|---|
 | 1 | Cargar el CSV | Opción 1 y Enter (ruta por defecto) | "5 registros leídos, 5 válidos, 0 descartados" | ✅ Correcto: «CSV procesado: 5 registros leídos, 5 válidos, 0 descartados.» |
 | 2 | Mostrar el catálogo | Opción 2 | Se listan los 5 videojuegos | ✅ Correcto: «--- CATÁLOGO (5 videojuegos) ---» con los 5 juegos |
-| 3 | Generar el XML | Opción 3 | Se crea `datos/catalogo.xml` con 5 `<videojuego>` | ⏳ Pendiente: necesita JAXB (`mvn clean package`) |
-| 4 | Que `codigoProveedor` no esté en el XML | Abrir `datos/catalogo.xml` | Ninguna etiqueta `<codigoProveedor>` | ⏳ Pendiente: se mira en el XML generado en la prueba 3 |
-| 5 | Volver a cargar el XML | Opción 4 y Enter | "XML cargado correctamente: 5 videojuegos" | ⏳ Pendiente: necesita JAXB |
-| 6 | Generar un CSV desde el XML | Opción 5 y Enter | Se crea `datos/catalogo_exportado.csv` con 5 filas (`codigoProveedor` vacío) | ⏳ Pendiente: depende de la prueba 5 |
+| 3 | Generar el XML | Opción 3 | Se crea `datos/catalogo.xml` con 5 `<videojuego>` | ✅ Crea `datos/catalogo.xml` con 5 `<videojuego>` y mostrar «XML generado correctamente con 5 videojuegos…» |
+| 4 | Que `codigoProveedor` no esté en el XML | Abrir `datos/catalogo.xml` | Ninguna etiqueta `<codigoProveedor>` | ✅ No aparece ninguna etiqueta `<codigoProveedor>` (por `@XmlTransient`) |
+| 5 | Volver a cargar el XML | Opción 4 y Enter | "XML cargado correctamente: 5 videojuegos" | ✅ Muestra «XML cargado correctamente: 5 videojuegos.» |
+| 6 | Generar un CSV desde el XML | Opción 5 y Enter | Se crea `datos/catalogo_exportado.csv` con 5 filas (`codigoProveedor` vacío) | ✅ Crea `datos/catalogo_exportado.csv` con cabecera y 5 filas, con `codigoProveedor` vacío |
 | 7 | Cargar un fichero que no existe | Opción 1 y ruta `no_existe.csv` | "ERROR: El fichero CSV 'no_existe.csv' no existe." | ✅ Correcto: sale ese mensaje y se vuelve al menú |
 | 8 | Registros CSV incorrectos | Opción 1 y ruta `datos/videojuegos_erroneo.csv` | 2 válidos y 3 descartados, con el motivo de cada línea | ✅ Correcto: «5 registros leídos, 2 válidos, 3 descartados»; línea 3, precio 'abc' no válido; línea 4, 5 campos en vez de 7; línea 5, stock 'seis' no válido |
 | 9 | Buscar por id y por título | Opción 6 con `3` y con `gta` | Salen Minecraft y GTA V | ✅ Correcto: con `3` sale Minecraft y con `gta` sale GTA V |
 | 10 | Información de ficheros | Opción 7 | Ruta, si existe y tamaño de los 3 ficheros | ✅ Correcto: ruta absoluta, «Existe: sí/no» y tamaño (283 bytes el CSV de entrada) |
 | 11 | Opción de menú incorrecta | Escribir `9` y `abc` | Aviso de opción no válida y el menú vuelve a salir | ✅ Correcto: «Opción no válida: elige un número entre 0 y 7.» y «debes escribir un número entre 0 y 7.» |
-| 12 | XML mal formado | Cambiar algo en `catalogo.xml` (por ejemplo `id="abc"`) y opción 4 | "ERROR al procesar el XML: …" sin que se cierre la app | ⏳ Pendiente: necesita JAXB |
+| 12 | XML mal formado | Cambiar algo en `catalogo.xml` (por ejemplo `id="abc"`) y opción 4 | "ERROR al procesar el XML:" sin que se cierre la app | ✅ Muestra «ERROR al procesar el XML» y volver al menú sin cerrarse |
 
 ## Equipo
 
